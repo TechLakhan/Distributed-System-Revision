@@ -20,6 +20,16 @@ public class EmployeeController {
     }
 
 
+    @PostMapping(value = "/employee/create")
+    public ResponseEntity<String> newEmployee(@RequestBody Employee employee) {
+        try {
+            return new ResponseEntity<>(employeeService.createNewEmployeeRecord(employee), HttpStatus.CREATED);
+        } catch (RuntimeException ex) {
+            throw new RuntimeException();
+        }
+    }
+
+
     @GetMapping(value = "/employee/{id}")
     public ResponseEntity<Employee> employeeById(@PathVariable Long id) throws EmployeeNotFoundException {
         try {

@@ -3,12 +3,10 @@ package co.in.techLakhan.Employee_Cache_demo.service;
 import co.in.techLakhan.Employee_Cache_demo.entity.Employee;
 import co.in.techLakhan.Employee_Cache_demo.exception.EmployeeNotFoundException;
 import co.in.techLakhan.Employee_Cache_demo.repository.EmployeeRepository;
-import co.in.techLakhan.Employee_Cache_demo.util.EmployeeCacheProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -21,15 +19,12 @@ public class EmployeeService {
     private static final Logger logger = LoggerFactory.getLogger(EmployeeService.class);
 
     private final EmployeeRepository employeeRepository;
-    private final RedisTemplate<String, Object> redisTemplate;
 
-    private final EmployeeCacheProperties cacheProperties;
+    private final EmailService emailService;
 
-
-    public EmployeeService(EmployeeRepository employeeRepository, RedisTemplate<String, Object> redisTemplate, EmployeeCacheProperties cacheProperties) {
+    public EmployeeService(EmployeeRepository employeeRepository, EmailService emailService) {
         this.employeeRepository = employeeRepository;
-        this.redisTemplate = redisTemplate;
-        this.cacheProperties = cacheProperties;
+        this.emailService = emailService;
     }
     @Cacheable(value = "employees", key = "#id")
     public Employee getEmployeeById(Long id) throws EmployeeNotFoundException {
@@ -48,5 +43,23 @@ public class EmployeeService {
         employee.setDepartment(newDetails.getDepartment());
         employee.setSalary(newDetails.getSalary());
         employeeRepository.save(employee);
+        logger.info("EmployeeService Thread : {}", Thread.currentThread().getName());
+        emailService.sendEmail(newDetails.getName());
+    }
+
+    public String createNewEmployeeRecord(Employee employee) {
+        logger.info("In createNewEmployeeRecord()");
+        try {
+            Employee newEmployee = new Employee();
+            newEmployee.setId(employee.getId());
+            newEmployee.setName(employee.getName());
+            newEmployee.setDepartment(employee.getDepartment());
+            newEmployee.setSalary(employee.getSalary());
+            employeeRepository.save(newEmployee);
+            return "new employee record created";
+        } catch (RuntimeException exception) {
+            logger.error("Error creating employee record with username {}", employee.getName());
+            throw new RuntimeException("Error creating new employee record");
+        }
     }
 }
