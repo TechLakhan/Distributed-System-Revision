@@ -1,6 +1,7 @@
 package co.in.techLakhan.Employee_Cache_demo.service;
 
 import co.in.techLakhan.Employee_Cache_demo.entity.Employee;
+import co.in.techLakhan.Employee_Cache_demo.entity.KafkaTest;
 import co.in.techLakhan.Employee_Cache_demo.exception.EmployeeNotFoundException;
 import co.in.techLakhan.Employee_Cache_demo.repository.EmployeeRepository;
 import org.slf4j.Logger;
@@ -22,9 +23,12 @@ public class EmployeeService {
 
     private final EmailService emailService;
 
-    public EmployeeService(EmployeeRepository employeeRepository, EmailService emailService) {
+    private final KafkaTest kafkaTest;
+
+    public EmployeeService(EmployeeRepository employeeRepository, EmailService emailService, KafkaTest kafkaTest) {
         this.employeeRepository = employeeRepository;
         this.emailService = emailService;
+        this.kafkaTest = kafkaTest;
     }
     @Cacheable(value = "employees", key = "#id")
     public Employee getEmployeeById(Long id) throws EmployeeNotFoundException {
@@ -44,7 +48,7 @@ public class EmployeeService {
         employee.setSalary(newDetails.getSalary());
         employeeRepository.save(employee);
         logger.info("EmployeeService Thread : {}", Thread.currentThread().getName());
-        emailService.sendEmail(newDetails.getName());
+        kafkaTest.sentMail(employeeId);
     }
 
     public String createNewEmployeeRecord(Employee employee) {
